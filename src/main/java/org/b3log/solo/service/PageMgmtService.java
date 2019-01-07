@@ -1,23 +1,25 @@
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Solo - A small and beautiful blogging system written in Java.
+ * Copyright (c) 2010-2019, b3log.org & hacpai.com
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package org.b3log.solo.service;
 
-import java.util.List;
-import javax.inject.Inject;
+import org.apache.commons.lang.StringUtils;
 import org.b3log.latke.Keys;
+import org.b3log.latke.ioc.Inject;
 import org.b3log.latke.logging.Level;
 import org.b3log.latke.logging.Logger;
 import org.b3log.latke.repository.RepositoryException;
@@ -26,21 +28,21 @@ import org.b3log.latke.service.LangPropsService;
 import org.b3log.latke.service.ServiceException;
 import org.b3log.latke.service.annotation.Service;
 import org.b3log.latke.util.Ids;
-import org.b3log.latke.util.Strings;
 import org.b3log.solo.model.Comment;
 import org.b3log.solo.model.Option;
 import org.b3log.solo.model.Page;
 import org.b3log.solo.repository.CommentRepository;
 import org.b3log.solo.repository.PageRepository;
-import org.b3log.solo.util.Comments;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.List;
 
 /**
  * Page management service.
  *
  * @author <a href="http://88250.b3log.org">Liang Ding</a>
- * @version 1.1.0.8, Nov 20, 2015
+ * @version 1.1.0.9, Sep 21, 2017
  * @since 0.4.0
  */
 @Service
@@ -49,7 +51,7 @@ public class PageMgmtService {
     /**
      * Logger.
      */
-    private static final Logger LOGGER = Logger.getLogger(PageMgmtService.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(PageMgmtService.class);
 
     /**
      * Page repository.
@@ -96,23 +98,22 @@ public class PageMgmtService {
     /**
      * Updates a page by the specified request json object.
      *
-     * @param requestJSONObject the specified request json object, for example,      <pre>
-     * {
-     *     "page": {
-     *         "oId": "",
-     *         "pageTitle": "",
-     *         "pageContent": "",
-     *         "pageOrder": int,
-     *         "pageCommentCount": int,
-     *         "pagePermalink": "",
-     *         "pageCommentable": boolean,
-     *         "pageType": "",
-     *         "pageOpenTarget": "",
-     *         "pageEditorType": "" // optional, preference specified if not exists this key
-     *     }
-     * }, see {@link Page} for more details
-     * </pre>
-     *
+     * @param requestJSONObject the specified request json object, for example,
+     *                          {
+     *                          "page": {
+     *                          "oId": "",
+     *                          "pageTitle": "",
+     *                          "pageContent": "",
+     *                          "pageOrder": int,
+     *                          "pageCommentCount": int,
+     *                          "pagePermalink": "",
+     *                          "pageCommentable": boolean,
+     *                          "pageType": "",
+     *                          "pageOpenTarget": "",
+     *                          "pageEditorType": "", // optional, preference specified if not exists this key
+     *                          "pageIcon": "" // optional
+     *                          }
+     *                          }, see {@link Page} for more details
      * @throws ServiceException service exception
      */
     public void updatePage(final JSONObject requestJSONObject) throws ServiceException {
@@ -132,7 +133,7 @@ public class PageMgmtService {
             final String oldPermalink = oldPage.getString(Page.PAGE_PERMALINK);
 
             if (!oldPermalink.equals(permalink)) {
-                if (Strings.isEmptyOrNull(permalink)) {
+                if (StringUtils.isBlank(permalink)) {
                     permalink = "/pages/" + pageId + ".html";
                 }
 
@@ -171,6 +172,8 @@ public class PageMgmtService {
                 final JSONObject preference = preferenceQueryService.getPreference();
                 newPage.put(Page.PAGE_EDITOR_TYPE, preference.optString(Option.ID_C_EDITOR_TYPE));
             }
+
+            page.put(Page.PAGE_ICON, page.optString(Page.PAGE_ICON));
 
             pageRepository.update(pageId, newPage);
 
@@ -217,20 +220,19 @@ public class PageMgmtService {
     /**
      * Adds a page with the specified request json object.
      *
-     * @param requestJSONObject the specified request json object, for example,      <pre>
-     * {
-     *     "page": {
-     *         "pageTitle": "",
-     *         "pageContent": "",
-     *         "pageOpenTarget": "",
-     *         "pageCommentable": boolean,
-     *         "pageType": "",
-     *         "pagePermalink": "", // optional
-     *         "pageEditorType": "" // optional, preference specified if not exists this key
-     *     }
-     * }, see {@link Page} for more details
-     * </pre>
-     *
+     * @param requestJSONObject the specified request json object, for example,
+     *                          {
+     *                          "page": {
+     *                          "pageTitle": "",
+     *                          "pageContent": "",
+     *                          "pageOpenTarget": "",
+     *                          "pageCommentable": boolean,
+     *                          "pageType": "",
+     *                          "pagePermalink": "", // optional
+     *                          "pageEditorType": "", // optional, preference specified if not exists this key
+     *                          "pageIcon": "" // optional
+     *                          }
+     *                          }, see {@link Page} for more details
      * @return generated page id
      * @throws ServiceException if permalink format checks failed or persists failed
      */
@@ -239,15 +241,12 @@ public class PageMgmtService {
 
         try {
             final JSONObject page = requestJSONObject.getJSONObject(Page.PAGE);
-
             page.put(Page.PAGE_COMMENT_COUNT, 0);
             final int maxOrder = pageRepository.getMaxOrder();
-
             page.put(Page.PAGE_ORDER, maxOrder + 1);
 
             String permalink = page.optString(Page.PAGE_PERMALINK);
-
-            if (Strings.isEmptyOrNull(permalink)) {
+            if (StringUtils.isBlank(permalink)) {
                 permalink = "/pages/" + Ids.genTimeMillisId() + ".html";
             }
 
@@ -281,6 +280,8 @@ public class PageMgmtService {
                 page.put(Page.PAGE_EDITOR_TYPE, preference.optString(Option.ID_C_EDITOR_TYPE));
             }
 
+            page.put(Page.PAGE_ICON, page.optString(Page.PAGE_ICON));
+
             final String ret = pageRepository.add(page);
 
             transaction.commit();
@@ -306,7 +307,7 @@ public class PageMgmtService {
     /**
      * Changes the order of a page specified by the given page id with the specified direction.
      *
-     * @param pageId the given page id
+     * @param pageId    the given page id
      * @param direction the specified direction, "up"/"down"
      * @throws ServiceException service exception
      */
@@ -356,16 +357,15 @@ public class PageMgmtService {
 
     /**
      * Removes page comments by the specified page id.
-     *
      * <p>
      * Removes related comments, sets page/blog comment statistic count.
      * </p>
      *
      * @param pageId the specified page id
      * @throws JSONException json exception
-     * @throws RepositoryException repository exception
+     * @throws Exception     exception
      */
-    private void removePageComments(final String pageId) throws JSONException, RepositoryException {
+    private void removePageComments(final String pageId) throws Exception {
         final int removedCnt = commentRepository.removeComments(pageId);
 
         int blogCommentCount = statisticQueryService.getBlogCommentCount();
@@ -389,17 +389,14 @@ public class PageMgmtService {
         final String pageId = page.getString(Keys.OBJECT_ID);
 
         final List<JSONObject> comments = commentRepository.getComments(pageId, 1, Integer.MAX_VALUE);
-
         for (final JSONObject comment : comments) {
             final String commentId = comment.getString(Keys.OBJECT_ID);
-            final String sharpURL = Comments.getCommentSharpURLForPage(page, commentId);
-
+            final String sharpURL = Comment.getCommentSharpURLForPage(page, commentId);
             comment.put(Comment.COMMENT_SHARP_URL, sharpURL);
-
-            if (Strings.isEmptyOrNull(comment.optString(Comment.COMMENT_ORIGINAL_COMMENT_ID))) {
+            if (StringUtils.isBlank(comment.optString(Comment.COMMENT_ORIGINAL_COMMENT_ID))) {
                 comment.put(Comment.COMMENT_ORIGINAL_COMMENT_ID, "");
             }
-            if (Strings.isEmptyOrNull(comment.optString(Comment.COMMENT_ORIGINAL_COMMENT_NAME))) {
+            if (StringUtils.isBlank(comment.optString(Comment.COMMENT_ORIGINAL_COMMENT_NAME))) {
                 comment.put(Comment.COMMENT_ORIGINAL_COMMENT_NAME, "");
             }
 

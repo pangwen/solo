@@ -1,26 +1,25 @@
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Solo - A small and beautiful blogging system written in Java.
+ * Copyright (c) 2010-2019, b3log.org & hacpai.com
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package org.b3log.solo.service;
 
-
-import java.util.List;
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import org.b3log.latke.Keys;
+import org.b3log.latke.Latkes;
+import org.b3log.latke.ioc.Inject;
 import org.b3log.latke.logging.Level;
 import org.b3log.latke.logging.Logger;
 import org.b3log.latke.model.Pagination;
@@ -29,21 +28,19 @@ import org.b3log.latke.repository.Query;
 import org.b3log.latke.repository.RepositoryException;
 import org.b3log.latke.service.ServiceException;
 import org.b3log.latke.service.annotation.Service;
-import org.b3log.latke.user.GeneralUser;
-import org.b3log.latke.user.UserService;
-import org.b3log.latke.user.UserServiceFactory;
 import org.b3log.latke.util.Paginator;
+import org.b3log.latke.util.URLs;
 import org.b3log.solo.repository.UserRepository;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.List;
 
 /**
  * User query service.
  *
  * @author <a href="http://88250.b3log.org">Liang Ding</a>
- * @version 1.0.0.3, Jul 10, 2013
+ * @version 1.0.0.7, Oct 5, 2018
  * @since 0.4.0
  */
 @Service
@@ -52,12 +49,7 @@ public class UserQueryService {
     /**
      * Logger.
      */
-    private static final Logger LOGGER = Logger.getLogger(UserQueryService.class.getName());
-
-    /**
-     * User service.
-     */
-    private UserService userService = UserServiceFactory.getUserService();
+    private static final Logger LOGGER = Logger.getLogger(UserQueryService.class);
 
     /**
      * User repository.
@@ -72,88 +64,8 @@ public class UserQueryService {
     private UserMgmtService userMgmtService;
 
     /**
-     * Determines whether if exists multiple users in current Solo.
-     *
-     * @return {@code true} if exists, {@code false} otherwise
-     * @throws ServiceException service exception
-     */
-    public boolean hasMultipleUsers() throws ServiceException {
-        final Query query = new Query().setPageCount(1);
-
-        try {
-            final JSONArray users = userRepository.get(query).getJSONArray(Keys.RESULTS);
-
-            return 1 != users.length();
-        } catch (final RepositoryException e) {
-            LOGGER.log(Level.ERROR, "Determines multiple users failed", e);
-
-            throw new ServiceException(e);
-        } catch (final JSONException e) {
-            LOGGER.log(Level.ERROR, "Determines multiple users failed", e);
-
-            throw new ServiceException(e);
-        }
-    }
-
-    /**
-     * Checks whether the current request is made by a logged in user
-     * (including default user and administrator lists in <i>users</i>).
-     * 
-     * <p>
-     * Invokes this method will try to login with cookie first.
-     * </p>
-     *
-     * @param request the specified request
-     * @param response the specified response
-     * @return {@code true} if the current request is made by logged in user,
-     * returns {@code false} otherwise
-     */
-    public boolean isLoggedIn(final HttpServletRequest request, final HttpServletResponse response) {
-        userMgmtService.tryLogInWithCookie(request, response);
-
-        final GeneralUser currentUser = userService.getCurrentUser(request);
-
-        return null != currentUser;
-    }
-
-    /**
-     * Checks whether the current request is made by logged in administrator.
-     *
-     * @param request the specified request
-     * @return {@code true} if the current request is made by logged in
-     * administrator, returns {@code false} otherwise
-     */
-    public boolean isAdminLoggedIn(final HttpServletRequest request) {
-        return userService.isUserLoggedIn(request) && userService.isUserAdmin(request);
-    }
-
-    /**
-     * Gets the current user.
-     *
-     * @param request the specified request
-     * @return the current user, {@code null} if not found
-     */
-    public JSONObject getCurrentUser(final HttpServletRequest request) {
-        final GeneralUser currentUser = userService.getCurrentUser(request);
-
-        if (null == currentUser) {
-            return null;
-        }
-
-        final String email = currentUser.getEmail();
-
-        try {
-            return userRepository.getByEmail(email);
-        } catch (final RepositoryException e) {
-            LOGGER.log(Level.ERROR, "Gets current user by request failed, returns null", e);
-
-            return null;
-        }
-    }
-
-    /**
      * Gets the administrator.
-     * 
+     *
      * @return administrator, returns {@code null} if not found
      * @throws ServiceException service exception
      */
@@ -167,18 +79,23 @@ public class UserQueryService {
     }
 
     /**
-     * Gets a user by the specified email.
+     * Gets a user by the specified email or username.
      *
-     * @param email the specified email
+     * @param emailOrUserName the specified email or username
      * @return user, returns {@code null} if not found
-     * @throws ServiceException service exception
      */
-    public JSONObject getUserByEmail(final String email) throws ServiceException {
+    public JSONObject getUserByEmailOrUserName(final String emailOrUserName) {
         try {
-            return userRepository.getByEmail(email);
+            JSONObject ret = userRepository.getByEmail(emailOrUserName);
+            if (null == ret) {
+                ret = userRepository.getByUserName(emailOrUserName);
+            }
+
+            return ret;
         } catch (final RepositoryException e) {
-            LOGGER.log(Level.ERROR, "Gets user by email[" + email + "] failed", e);
-            throw new ServiceException(e);
+            LOGGER.log(Level.ERROR, "Gets a user by email or username [" + emailOrUserName + "] failed", e);
+
+            return null;
         }
     }
 
@@ -186,13 +103,9 @@ public class UserQueryService {
      * Gets users by the specified request json object.
      *
      * @param requestJSONObject the specified request json object, for example,
-     * <pre>
-     * {
-     *     "paginationCurrentPageNum": 1,
-     *     "paginationPageSize": 20,
-     *     "paginationWindowSize": 10,
-     * }, see {@link Pagination} for more details
-     * </pre>
+     *                          "paginationCurrentPageNum": 1,
+     *                          "paginationPageSize": 20,
+     *                          "paginationWindowSize": 10
      * @return for example,
      * <pre>
      * {
@@ -220,8 +133,7 @@ public class UserQueryService {
         final int windowSize = requestJSONObject.optInt(Pagination.PAGINATION_WINDOW_SIZE);
         final Query query = new Query().setCurrentPageNum(currentPageNum).setPageSize(pageSize);
 
-        JSONObject result = null;
-
+        JSONObject result;
         try {
             result = userRepository.get(query);
         } catch (final RepositoryException e) {
@@ -231,17 +143,12 @@ public class UserQueryService {
         }
 
         final int pageCount = result.optJSONObject(Pagination.PAGINATION).optInt(Pagination.PAGINATION_PAGE_COUNT);
-
         final JSONObject pagination = new JSONObject();
-
         ret.put(Pagination.PAGINATION, pagination);
         final List<Integer> pageNums = Paginator.paginate(currentPageNum, pageSize, pageCount, windowSize);
-
         pagination.put(Pagination.PAGINATION_PAGE_COUNT, pageCount);
         pagination.put(Pagination.PAGINATION_PAGE_NUMS, pageNums);
-
         final JSONArray users = result.optJSONArray(Keys.RESULTS);
-
         ret.put(User.USERS, users);
 
         return ret;
@@ -262,18 +169,17 @@ public class UserQueryService {
      *     }
      * }
      * </pre>, returns {@code null} if not found
-     * @throws ServiceException service exception
      */
-    public JSONObject getUser(final String userId) throws ServiceException {
+    public JSONObject getUser(final String userId) {
         final JSONObject ret = new JSONObject();
 
-        JSONObject user = null;
-
+        JSONObject user;
         try {
             user = userRepository.get(userId);
         } catch (final RepositoryException e) {
             LOGGER.log(Level.ERROR, "Gets a user failed", e);
-            throw new ServiceException(e);
+
+            return null;
         }
 
         if (null == user) {
@@ -291,7 +197,10 @@ public class UserQueryService {
      * @return logout URL, returns {@code null} if the user is not logged in
      */
     public String getLogoutURL() {
-        return userService.createLogoutURL("/");
+        String to = Latkes.getServePath();
+        to = URLs.encode(to + "/");
+
+        return Latkes.getContextPath() + "/logout?goto=" + to;
     }
 
     /**
@@ -301,12 +210,15 @@ public class UserQueryService {
      * @return login URL
      */
     public String getLoginURL(final String redirectURL) {
-        return userService.createLoginURL(redirectURL);
+        String to = Latkes.getServePath();
+        to = URLs.encode(to + redirectURL);
+
+        return Latkes.getContextPath() + "/login?goto=" + to;
     }
 
     /**
      * Sets the user management service with the specified user management service.
-     * 
+     *
      * @param userMgmtService the specified user management service
      */
     public void setUserMgmtService(final UserMgmtService userMgmtService) {
@@ -315,7 +227,7 @@ public class UserQueryService {
 
     /**
      * Sets the user repository with the specified user repository.
-     * 
+     *
      * @param userRepository the specified user repository
      */
     public void setUserRepository(final UserRepository userRepository) {

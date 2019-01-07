@@ -1,24 +1,26 @@
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Solo - A small and beautiful blogging system written in Java.
+ * Copyright (c) 2010-2019, b3log.org & hacpai.com
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 /**
  * page list for admin
  *
  * @author <a href="http://vanessa.b3log.org">Liyuan Li</a>
  * @author <a href="http://88250.b3log.org">Liang Ding</a>
- * @version 1.1.2.5, Nov 8, 2016
+ * @version 1.2.4.0, Sep 10, 2018
  */
 
 /* page-list 相关操作 */
@@ -50,7 +52,7 @@ admin.pageList = {
                 style: "padding-left: 12px;",
                 text: Label.permalinkLabel,
                 index: "pagePermalink",
-                minWidth: 300
+                minWidth: 100
             }, {
                 style: "padding-left: 12px;",
                 text: Label.openMethodLabel,
@@ -140,20 +142,24 @@ admin.pageList = {
                         } else {
                             pageData[i].pageOrder = '<div class="table-center" style="width:14px">\
                                         <span onclick="admin.pageList.changeOrder(' + pages[i].oId + ', ' + i + ', \'down\');" \
-                                        class="table-downIcon"></span></div>';
+                                        class="icon-move-down"></span></div>';
                         }
                     } else if (i === pages.length - 1) {
                         pageData[i].pageOrder = '<div class="table-center" style="width:14px">\
-                                    <span onclick="admin.pageList.changeOrder(' + pages[i].oId + ', ' + i + ', \'up\');" class="table-upIcon"></span>\
+                                    <span onclick="admin.pageList.changeOrder(' + pages[i].oId + ', ' + i + ', \'up\');" class="icon-move-up"></span>\
                                     </div>';
                     } else {
                         pageData[i].pageOrder = '<div class="table-center" style="width:38px">\
-                                    <span onclick="admin.pageList.changeOrder(' + pages[i].oId + ', ' + i + ', \'up\');" class="table-upIcon"></span>\
-                                    <span onclick="admin.pageList.changeOrder(' + pages[i].oId + ', ' + i + ', \'down\');" class="table-downIcon"></span>\
+                                    <span onclick="admin.pageList.changeOrder(' + pages[i].oId + ', ' + i + ', \'up\');" class="icon-move-up"></span>\
+                                    <span onclick="admin.pageList.changeOrder(' + pages[i].oId + ', ' + i + ', \'down\');" class="icon-move-down"></span>\
                                     </div>';
                     }
 
-                    pageData[i].pageTitle = "<a class='no-underline' href='" + pages[i].pagePermalink + "' target='_blank'>" +
+                    var pageIcon = '';
+                    if (pages[i].pageIcon !== '') {
+                      pageIcon = "<img class='navigation-icon' src='" + pages[i].pageIcon + "'/> ";
+                    }
+                    pageData[i].pageTitle = pageIcon + "<a class='no-underline' href='" + pages[i].pagePermalink + "' target='_blank'>" +
                             pages[i].pageTitle + "</a>";
                     pageData[i].pagePermalink = "<a class='no-underline' href='" + pages[i].pagePermalink + "' target='_blank'>"
                             + pages[i].pagePermalink + "</a>";
@@ -162,7 +168,7 @@ admin.pageList = {
                     pageData[i].comments = pages[i].pageCommentCount;
                     pageData[i].expendRow = "<span><a href='" + pages[i].pagePermalink + "' target='_blank'>" + Label.viewLabel + "</a>  \
                                 <a href='javascript:void(0)' onclick=\"admin.pageList.get('" + pages[i].oId + "')\">" + Label.updateLabel + "</a>\
-                                <a href='javascript:void(0)' onclick=\"admin.pageList.del('" + pages[i].oId + "', '" + pages[i].pageTitle + "')\">" + Label.removeLabel + "</a>\
+                                <a href='javascript:void(0)' onclick=\"admin.pageList.del('" + pages[i].oId + "', '" + encodeURIComponent(pages[i].pageTitle) + "')\">" + Label.removeLabel + "</a>\
                                 <a href='javascript:void(0)' onclick=\"admin.comment.open('" + pages[i].oId + "', 'page')\">" + Label.commentLabel + "</a></span>";
                 }
 
@@ -196,6 +202,7 @@ admin.pageList = {
                 $("#pageTitle").val(result.page.pageTitle);
                 $("#pagePermalink").val(result.page.pagePermalink);
                 $("#pageTarget").val(result.page.pageOpenTarget);
+                $("#pageIcon").val(result.page.pageIcon);
                 if (result.page.pageType === "page") {
                     $($(".fn-type").get(1)).click();
                 } else {
@@ -222,7 +229,7 @@ admin.pageList = {
      * @title 自定义页面标题
      */
     del: function (id, title) {
-        var isDelete = confirm(Label.confirmRemoveLabel + Label.navLabel + '"' + title + '"?');
+        var isDelete = confirm(Label.confirmRemoveLabel + Label.navLabel + '"' + Util.htmlDecode(title) + '"?');
         if (isDelete) {
             $("#loadMsg").text(Label.loadingLabel);
             $("#tipMsg").text("");
@@ -278,7 +285,8 @@ admin.pageList = {
                     "pagePermalink": pagePermalink,
                     "pageCommentable": $("#pageCommentable").prop("checked"),
                     "pageType": admin.pageList.type,
-                    "pageOpenTarget": $("#pageTarget").val()
+                    "pageOpenTarget": $("#pageTarget").val(),
+                    "pageIcon": $("#pageIcon").val()
                 }
             };
 
@@ -297,6 +305,7 @@ admin.pageList = {
                     admin.pageList.id = "";
                     $("#pagePermalink").val("");
                     $("#pageTitle").val("");
+                    $("#pageIcon").val("");
                     $("#pageCommentable").prop("cheked", false);
                     $("#pageTarget").val("_self");
                     $($(".fn-type").get(0)).click();
@@ -344,7 +353,8 @@ admin.pageList = {
                     "pageCommentable": $("#pageCommentable").prop("checked"),
                     "pageType": admin.pageList.type,
                     "pageOpenTarget": $("#pageTarget").val(),
-                    "pageEditorType": admin.pageList.currentEditorType
+                    "pageEditorType": admin.pageList.currentEditorType,
+                    "pageIcon": $("#pageIcon").val()
                 }
             };
 
@@ -364,6 +374,7 @@ admin.pageList = {
 
                     admin.pageList.getList(admin.pageList.pageInfo.currentPage);
                     $("#pageTitle").val("");
+                    $("#pageIcon").val("");
                     $("#pagePermalink").val("");
                     $("#pageCommentable").prop("cheked", false);
                     $("#pageTarget").val("_self");

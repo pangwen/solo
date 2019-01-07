@@ -1,17 +1,19 @@
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Solo - A small and beautiful blogging system written in Java.
+ * Copyright (c) 2010-2019, b3log.org & hacpai.com
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package org.b3log.solo.model;
 
@@ -20,10 +22,25 @@ package org.b3log.solo.model;
  *
  * @author <a href="http://88250.b3log.org">Liang Ding</a>
  * @author <a href="mailto:dongxu.wang@acm.org">Dongxu Wang</a>
- * @version 1.4.5.1, Nov 1, 2015
+ * @version 1.7.0.0, Jan 3, 2019
  * @since 0.3.1
  */
 public final class Common {
+
+    /**
+     * Key of marked engine available.
+     */
+    public static final String MARKED_AVAILABLE = "markedAvailable";
+
+    /**
+     * Key of keyword.
+     */
+    public static final String KEYWORD = "keyword";
+
+    /**
+     * Key of data.
+     */
+    public static final String DATA = "data";
 
     /**
      * Key of direction.
@@ -34,6 +51,11 @@ public final class Common {
      * Most used tags.
      */
     public static final String MOST_USED_TAGS = "mostUsedTags";
+
+    /**
+     * Most used categories.
+     */
+    public static final String MOST_USED_CATEGORIES = "mostUsedCategories";
 
     /**
      * Most comment count articles.
@@ -89,21 +111,6 @@ public final class Common {
      * Is index.
      */
     public static final String IS_INDEX = "isIndex";
-
-    /**
-     * tag-articles.
-     */
-    public static final String TAG_ARTICLES = "tag-articles";
-
-    /**
-     * archive-date-articles.
-     */
-    public static final String ARCHIVED_DATE_ARTICLES = "archive-date-articles";
-
-    /**
-     * author-articles.
-     */
-    public static final String AUTHOR_ARTICLES = "author-articles";
 
     /**
      * Key of path.
@@ -174,16 +181,11 @@ public final class Common {
      * Key of current user.
      */
     public static final String CURRENT_USER = "currentUser";
-    
+
     /**
      * Key of admin user.
      */
     public static final String ADMIN_USER = "adminUser";
-
-    /**
-     * Key of enabled multiple user support.
-     */
-    public static final String ENABLED_MULTIPLE_USER_SUPPORT = "enabledMultipleUserSupport";
 
     /**
      * Key of is logged in.
@@ -326,7 +328,7 @@ public final class Common {
     public static final String GRAVATAR = "gravatar";
 
     /**
-     * Private default constructor.
+     * Private constructor.
      */
     private Common() {
     }

@@ -1,32 +1,24 @@
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Solo - A small and beautiful blogging system written in Java.
+ * Copyright (c) 2010-2019, b3log.org & hacpai.com
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package org.b3log.solo;
 
-import java.awt.Desktop;
-import java.io.File;
-import java.net.URI;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.*;
 import org.b3log.latke.Latkes;
-import org.b3log.latke.RuntimeMode;
 import org.b3log.latke.logging.Level;
 import org.b3log.latke.logging.Logger;
 import org.b3log.latke.util.Strings;
@@ -35,16 +27,19 @@ import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Slf4jLog;
 import org.eclipse.jetty.webapp.WebAppContext;
 
+import java.awt.*;
+import java.io.File;
+import java.net.URI;
+
 /**
  * Solo with embedded Jetty, <a href="https://github.com/b3log/solo/issues/12037">standalone mode</a>.
- *
  * <ul>
- * <li>Windows: java -cp WEB-INF/lib/*;WEB-INF/classes org.b3log.solo.Starter</li>
- * <li>Unix-like: java -cp WEB-INF/lib/*:WEB-INF/classes org.b3log.solo.Starter</li>
+ * <li>Windows: java -cp "WEB-INF/lib/*;WEB-INF/classes" org.b3log.solo.Starter</li>
+ * <li>Unix-like: java -cp "WEB-INF/lib/*:WEB-INF/classes" org.b3log.solo.Starter</li>
  * </ul>
  *
  * @author <a href="http://88250.b3log.org">Liang Ding</a>
- * @version 1.1.0.7, Dec 23, 2015
+ * @version 1.1.0.15, Dec 15, 2018
  * @since 1.2.0
  */
 public final class Starter {
@@ -55,6 +50,12 @@ public final class Starter {
         } catch (final Exception e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Private constructor.
+     */
+    private Starter() {
     }
 
     /**
@@ -100,16 +101,17 @@ public final class Starter {
         options.addOption(runtimeModeOpt);
 
         options.addOption("h", "help", false, "print help for the command");
+        options.addOption("no", "not_open", false, "not auto open in the browser");
 
         final HelpFormatter helpFormatter = new HelpFormatter();
         final CommandLineParser commandLineParser = new DefaultParser();
         CommandLine commandLine;
 
         final boolean isWindows = System.getProperty("os.name").toLowerCase().contains("windows");
-        final String cmdSyntax = isWindows ? "java -cp WEB-INF/lib/*;WEB-INF/classes org.b3log.solo.Starter"
-                : "java -cp WEB-INF/lib/*:WEB-INF/classes org.b3log.solo.Starter";
-        final String header = "\nSolo is a blogging system written in Java, feel free to create your or your team own blog.\nSolo 是一个用 Java 实现的博客系统，为你或你的团队创建个博客吧。\n\n";
-        final String footer = "\nReport bugs or request features please visit our project website: https://github.com/b3log/solo\n\n";
+        final String cmdSyntax = isWindows ? "java -cp \"WEB-INF/lib/*;WEB-INF/classes\" org.b3log.solo.Starter"
+                : "java -cp \"WEB-INF/lib/*:WEB-INF/classes\" org.b3log.solo.Starter";
+        final String header = "\nSolo 是一款小而美的 Java 博客系统。\n\n";
+        final String footer = "\n提需求或报告缺陷请到项目网站: https://github.com/b3log/solo\n\n";
         try {
             commandLine = commandLineParser.parse(options, args);
         } catch (final ParseException e) {
@@ -143,12 +145,8 @@ public final class Starter {
         Latkes.setStaticServerPort(staticServerPort);
         String runtimeMode = commandLine.getOptionValue("runtime_mode");
         if (null != runtimeMode) {
-            Latkes.setRuntimeMode(RuntimeMode.valueOf(runtimeMode));
+            Latkes.setRuntimeMode(Latkes.RuntimeMode.valueOf(runtimeMode));
         }
-        Latkes.setScanPath("org.b3log.solo"); // For Latke IoC 
-
-        logger.info("Standalone mode, see [https://github.com/b3log/solo/wiki/standalone_mode] for more details.");
-        Latkes.initRuntimeEnv();
 
         String webappDirLocation = "src/main/webapp/"; // POM structure in dev env
         final File file = new File(webappDirLocation);
@@ -157,7 +155,6 @@ public final class Starter {
         }
 
         final int port = Integer.valueOf(portArg);
-
         final Server server = new Server(port);
         final WebAppContext root = new WebAppContext();
         root.setParentLoaderPriority(true); // Use parent class loader
@@ -165,7 +162,6 @@ public final class Starter {
         root.setDescriptor(webappDirLocation + "/WEB-INF/web.xml");
         root.setResourceBase(webappDirLocation);
         server.setHandler(root);
-
         try {
             server.start();
         } catch (final Exception e) {
@@ -180,17 +176,23 @@ public final class Starter {
         final String contextPath = Latkes.getContextPath();
 
         try {
-            Desktop.getDesktop().browse(new URI(serverScheme + "://" + serverHost + ":" + serverPort + contextPath));
+            if (!commandLine.hasOption("no")) {
+                Desktop.getDesktop().browse(new URI(serverScheme + "://" + serverHost + ":" + serverPort + contextPath));
+            }
         } catch (final Throwable e) {
             // Ignored
         }
 
-        server.join();
-    }
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                server.stop();
+            } catch (final Exception e) {
+                logger.log(Level.ERROR, "Server stop failed", e);
 
-    /**
-     * Private constructor.
-     */
-    private Starter() {
+                System.exit(-1);
+            }
+        }));
+
+        server.join();
     }
 }

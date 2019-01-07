@@ -1,40 +1,36 @@
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Solo - A small and beautiful blogging system written in Java.
+ * Copyright (c) 2010-2019, b3log.org & hacpai.com
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package org.b3log.solo.service;
 
-import javax.inject.Inject;
-import org.b3log.latke.Keys;
+import org.b3log.latke.ioc.Inject;
 import org.b3log.latke.logging.Level;
 import org.b3log.latke.logging.Logger;
-import org.b3log.latke.repository.FilterOperator;
-import org.b3log.latke.repository.PropertyFilter;
-import org.b3log.latke.repository.Query;
-import org.b3log.latke.repository.RepositoryException;
 import org.b3log.latke.service.ServiceException;
 import org.b3log.latke.service.annotation.Service;
 import org.b3log.solo.model.Option;
 import org.b3log.solo.repository.OptionRepository;
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 /**
  * Preference query service.
  *
  * @author <a href="http://88250.b3log.org">Liang Ding</a>
- * @version 1.1.0.2, Dec 13, 2015
+ * @version 1.1.0.5, Nov 6, 2018
  * @since 0.4.0
  */
 @Service
@@ -43,13 +39,19 @@ public class PreferenceQueryService {
     /**
      * Logger.
      */
-    private static final Logger LOGGER = Logger.getLogger(PreferenceQueryService.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(PreferenceQueryService.class);
 
     /**
      * Option repository.
      */
     @Inject
     private OptionRepository optionRepository;
+
+    /**
+     * Optiona query service.
+     */
+    @Inject
+    private OptionQueryService optionQueryService;
 
     /**
      * Gets the reply notification template.
@@ -76,28 +78,16 @@ public class PreferenceQueryService {
      * Gets the user preference.
      *
      * @return user preference, returns {@code null} if not found
-     * @throws ServiceException if repository exception
      */
-    public JSONObject getPreference() throws ServiceException {
+    public JSONObject getPreference() {
         try {
             final JSONObject checkInit = optionRepository.get(Option.ID_C_ADMIN_EMAIL);
             if (null == checkInit) {
                 return null;
             }
 
-            final Query query = new Query();
-            query.setFilter(new PropertyFilter(Option.OPTION_CATEGORY, FilterOperator.EQUAL, Option.CATEGORY_C_PREFERENCE));
-            final JSONArray opts = optionRepository.get(query).optJSONArray(Keys.RESULTS);
-
-            final JSONObject ret = new JSONObject();
-            for (int i = 0; i < opts.length(); i++) {
-                final JSONObject opt = opts.optJSONObject(i);
-
-                ret.put(opt.optString(Keys.OBJECT_ID), opt.opt(Option.OPTION_VALUE));
-            }
-
-            return ret;
-        } catch (final RepositoryException e) {
+            return optionQueryService.getOptions(Option.CATEGORY_C_PREFERENCE);
+        } catch (final Exception e) {
             return null;
         }
     }

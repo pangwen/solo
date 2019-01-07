@@ -1,24 +1,24 @@
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Solo - A small and beautiful blogging system written in Java.
+ * Copyright (c) 2010-2019, b3log.org & hacpai.com
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package org.b3log.solo.service;
 
-
-import java.util.List;
-import javax.inject.Inject;
 import org.b3log.latke.Keys;
+import org.b3log.latke.ioc.Inject;
 import org.b3log.latke.logging.Level;
 import org.b3log.latke.logging.Logger;
 import org.b3log.latke.model.Pagination;
@@ -32,6 +32,7 @@ import org.b3log.solo.repository.PageRepository;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.List;
 
 /**
  * Page query service.
@@ -46,7 +47,7 @@ public class PageQueryService {
     /**
      * Logger.
      */
-    private static final Logger LOGGER = Logger.getLogger(PageQueryService.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(PageQueryService.class);
 
     /**
      * Page repository.
@@ -70,7 +71,8 @@ public class PageQueryService {
      *         "pageCommentCount": int,
      *         "pageCommentable": boolean,
      *         "pageType": "",
-     *         "pageOpenTarget": ""
+     *         "pageOpenTarget": "",
+     *         "pageIcon": ""
      *     }
      * }
      * </pre>, returns {@code null} if not found
@@ -81,7 +83,6 @@ public class PageQueryService {
 
         try {
             final JSONObject page = pageRepository.get(pageId);
-
             if (null == page) {
                 return null;
             }
@@ -98,15 +99,12 @@ public class PageQueryService {
 
     /**
      * Gets pages by the specified request json object.
-     * 
+     *
      * @param requestJSONObject the specified request json object, for example,
-     * <pre>
-     * {
-     *     "paginationCurrentPageNum": 1,
-     *     "paginationPageSize": 20,
-     *     "paginationWindowSize": 10
-     * }, see {@link Pagination} for more details
-     * </pre>
+     *                          "paginationCurrentPageNum": 1,
+     *                          "paginationPageSize": 20,
+     *                          "paginationWindowSize": 10
+     *                          see {@link Pagination} for more details
      * @return for example,
      * <pre>
      * {
@@ -138,7 +136,7 @@ public class PageQueryService {
             final int windowSize = requestJSONObject.getInt(Pagination.PAGINATION_WINDOW_SIZE);
 
             final Query query = new Query().setCurrentPageNum(currentPageNum).setPageSize(pageSize).addSort(Page.PAGE_ORDER, SortDirection.ASCENDING).setPageCount(
-                1);
+                    1);
             final JSONObject result = pageRepository.get(query);
             final int pageCount = result.getJSONObject(Pagination.PAGINATION).getInt(Pagination.PAGINATION_PAGE_COUNT);
 
@@ -169,7 +167,7 @@ public class PageQueryService {
 
     /**
      * Set the page repository with the specified page repository.
-     * 
+     *
      * @param pageRepository the specified page repository
      */
     public void setPageRepository(final PageRepository pageRepository) {

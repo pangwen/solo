@@ -1,41 +1,28 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="utf-8" />
-        <meta name="robots" content="none" />
-        <title>${blogTitle} - 404 Not Found!</title>
-        <link type="text/css" rel="stylesheet" href="${staticServePath}/css/default-init${miniPostfix}.css?${staticResourceVersion}" charset="utf-8" />
-        <link rel="icon" type="image/png" href="${staticServePath}/favicon.png" />
-    </head>
-    <body>
-        <div class="wrapper">
-            <div class="wrap">
-                <div class="content">
-                    <div class="logo">
-                        <a href="http://b3log.org" target="_blank">
-                            <img border="0" width="153" height="56" alt="B3log" title="B3log" src="${staticServePath}/images/logo.jpg"/>
-                        </a>
-                    </div>
-                    <div class="main">
-                        <h2>404 Not Found!</h2>
-                        <img class="img-t0t" width="488" src="${staticServePath}/images/404.gif" title="404" alt="500: not found!" />
-                        <div class="a-404">
-                            欢迎访问
-                            <a href="https://hacpai.com">黑客与画家</a>
-                        </div>
-                        <a href="http://b3log.org" target="_blank">
-                            <img border="0" class="icon" alt="B3log" title="B3log" src="${staticServePath}/favicon.png"/>
-                        </a>
-                    </div>
-                    <span class="clear"></span>
-                </div>
-            </div>
-        </div>
-        <div class="footerWrapper">
-            <div class="footer">
-                &copy; ${year}
-                Powered by <a href="http://b3log.org" target="_blank">B3log 开源</a>, ver ${version}
-            </div>
-        </div>
-    </body>
-</html>
+<#--
+
+    Solo - A small and beautiful blogging system written in Java.
+    Copyright (c) 2010-2019, b3log.org & hacpai.com
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
+
+    You should have received a copy of the GNU Affero General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+-->
+<#include "../macro-common-page.ftl">
+
+<@commonPage "404 Not Found!">
+<h2>404 Not Found!</h2>
+<img class="img-error" src="${staticServePath}/images/404.gif" title="404" alt="404 Not Found!"/>
+<div class="a-error">
+    Please <a href="${loginURL}">Login</a> or return to <a href="${servePath}">Index</a>.
+</div>
+</@commonPage>

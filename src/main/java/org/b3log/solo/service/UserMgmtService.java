@@ -1,29 +1,27 @@
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Solo - A small and beautiful blogging system written in Java.
+ * Copyright (c) 2010-2019, b3log.org & hacpai.com
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package org.b3log.solo.service;
 
-import javax.inject.Inject;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang.StringUtils;
 import org.b3log.latke.Keys;
 import org.b3log.latke.Latkes;
-import org.b3log.latke.ioc.LatkeBeanManager;
-import org.b3log.latke.ioc.Lifecycle;
+import org.b3log.latke.ioc.Inject;
 import org.b3log.latke.logging.Level;
 import org.b3log.latke.logging.Logger;
 import org.b3log.latke.model.Role;
@@ -33,20 +31,24 @@ import org.b3log.latke.repository.Transaction;
 import org.b3log.latke.service.LangPropsService;
 import org.b3log.latke.service.ServiceException;
 import org.b3log.latke.service.annotation.Service;
-import org.b3log.latke.util.MD5;
-import org.b3log.latke.util.Sessions;
+import org.b3log.latke.util.CollectionUtils;
 import org.b3log.latke.util.Strings;
+import org.b3log.solo.model.Option;
 import org.b3log.solo.model.UserExt;
 import org.b3log.solo.repository.UserRepository;
-import org.b3log.solo.util.Thumbnails;
+import org.b3log.solo.util.Solos;
+import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.util.Set;
 
 /**
  * User management service.
  *
  * @author <a href="http://88250.b3log.org">Liang Ding</a>
  * @author <a href="mailto:385321165@qq.com">DASHU</a>
- * @version 1.1.0.6, Oct 17, 2015
+ * @author <a href="https://github.com/nanolikeyou">nanolikeyou</a>
+ * @version 1.1.0.15, Oct 19, 2018
  * @since 0.4.0
  */
 @Service
@@ -55,7 +57,12 @@ public class UserMgmtService {
     /**
      * Logger.
      */
-    private static final Logger LOGGER = Logger.getLogger(UserMgmtService.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(UserMgmtService.class);
+
+    /**
+     * Length of hashed password.
+     */
+    private static final int HASHED_PASSWORD_LENGTH = 32;
 
     /**
      * User repository.
@@ -70,82 +77,27 @@ public class UserMgmtService {
     private LangPropsService langPropsService;
 
     /**
-     * Length of hashed password.
+     * Option query service.
      */
-    private static final int HASHED_PASSWORD_LENGTH = 32;
+    @Inject
+    private OptionQueryService optionQueryService;
 
     /**
-     * Tries to login with cookie.
-     *
-     * @param request the specified request
-     * @param response the specified response
+     * Option management service.
      */
-    public void tryLogInWithCookie(final HttpServletRequest request, final HttpServletResponse response) {
-        final Cookie[] cookies = request.getCookies();
-
-        if (null == cookies || 0 == cookies.length) {
-            return;
-        }
-
-        try {
-            for (int i = 0; i < cookies.length; i++) {
-                final Cookie cookie = cookies[i];
-
-                if (!"b3log-latke".equals(cookie.getName())) {
-                    continue;
-                }
-
-                final JSONObject cookieJSONObject = new JSONObject(cookie.getValue());
-
-                final String userEmail = cookieJSONObject.optString(User.USER_EMAIL);
-
-                if (Strings.isEmptyOrNull(userEmail)) {
-                    break;
-                }
-
-                final LatkeBeanManager beanManager = Lifecycle.getBeanManager();
-                final UserQueryService userQueryService = beanManager.getReference(UserQueryService.class);
-
-                final JSONObject user = userQueryService.getUserByEmail(userEmail.toLowerCase().trim());
-
-                if (null == user) {
-                    break;
-                }
-
-                final String userPassword = user.optString(User.USER_PASSWORD);
-                final String hashPassword = cookieJSONObject.optString(User.USER_PASSWORD);
-
-                if (userPassword.equals(hashPassword)) {
-                    Sessions.login(request, response, user);
-                    LOGGER.log(Level.DEBUG, "Logged in with cookie[email={0}]", userEmail);
-                }
-            }
-        } catch (final Exception e) {
-            LOGGER.log(Level.WARN, "Parses cookie failed, clears the cookie[name=b3log-latke]", e);
-
-            final Cookie cookie = new Cookie("b3log-latke", null);
-
-            cookie.setMaxAge(0);
-            cookie.setPath("/");
-
-            response.addCookie(cookie);
-        }
-    }
+    @Inject
+    private OptionMgmtService optionMgmtService;
 
     /**
      * Updates a user by the specified request json object.
      *
-     * @param requestJSONObject the specified request json object, for example,      <pre>
-     * {
-     *     "oId": "",
-     *     "userName": "",
-     *     "userEmail": "",
-     *     "userPassword": "", // Unhashed
-     *     "userRole": "", // optional
-     *     "userURL": "", // optional
-     * }
-     * </pre>
-     *
+     * @param requestJSONObject the specified request json object, for example,
+     *                          "oId": "",
+     *                          "userName": "",
+     *                          "userEmail": "",
+     *                          "userPassword": "", // Unhashed
+     *                          "userRole": "", // optional
+     *                          "userURL": "", // optional
      * @throws ServiceException service exception
      */
     public void updateUser(final JSONObject requestJSONObject) throws ServiceException {
@@ -168,33 +120,33 @@ public class UserMgmtService {
                 throw new ServiceException(langPropsService.get("duplicatedEmailLabel"));
             }
 
+            oldUser.put(User.USER_EMAIL, userNewEmail);
+
             // Update
             final String userName = requestJSONObject.optString(User.USER_NAME);
-            final String userPassword = requestJSONObject.optString(User.USER_PASSWORD);
-
-            oldUser.put(User.USER_EMAIL, userNewEmail);
+            if (UserExt.invalidUserName(userName)) {
+                throw new ServiceException(langPropsService.get("userNameInvalidLabel"));
+            }
             oldUser.put(User.USER_NAME, userName);
 
-            final boolean mybeHashed = HASHED_PASSWORD_LENGTH == userPassword.length();
-            final String newHashedPassword = MD5.hash(userPassword);
+            final String userPassword = requestJSONObject.optString(User.USER_PASSWORD);
+            final boolean maybeHashed = HASHED_PASSWORD_LENGTH == userPassword.length();
+            final String newHashedPassword = DigestUtils.md5Hex(userPassword);
             final String oldHashedPassword = oldUser.optString(User.USER_PASSWORD);
-
-            if (!"demo.b3log.org".equals(Latkes.getServerHost())) { // Skips the Solo Online Demo (http://demo.b3log.org)
-                if (!mybeHashed || (!oldHashedPassword.equals(userPassword) && !oldHashedPassword.equals(newHashedPassword))) {
-                    oldUser.put(User.USER_PASSWORD, newHashedPassword);
-                }
+            if (!maybeHashed || (!oldHashedPassword.equals(userPassword) && !oldHashedPassword.equals(newHashedPassword))) {
+                oldUser.put(User.USER_PASSWORD, newHashedPassword);
             }
 
             final String userRole = requestJSONObject.optString(User.USER_ROLE);
-            if (!Strings.isEmptyOrNull(userRole)) {
+            if (StringUtils.isNotBlank(userRole)) {
                 oldUser.put(User.USER_ROLE, userRole);
             }
 
             final String userURL = requestJSONObject.optString(User.USER_URL);
-            if (!Strings.isEmptyOrNull(userURL)) {
+            if (StringUtils.isNotBlank(userURL)) {
                 oldUser.put(User.USER_URL, userURL);
             }
-            
+
             final String userAvatar = requestJSONObject.optString(UserExt.USER_AVATAR);
             if (!StringUtils.equals(userAvatar, oldUser.optString(UserExt.USER_AVATAR))) {
                 oldUser.put(UserExt.USER_AVATAR, userAvatar);
@@ -213,7 +165,7 @@ public class UserMgmtService {
     }
 
     /**
-     * Swithches the user role between "defaultRole" and "visitorRole" by the specified user id.
+     * Switches the user role between "defaultRole" and "visitorRole" by the specified user id.
      *
      * @param userId the specified user id
      * @throws ServiceException exception
@@ -238,6 +190,7 @@ public class UserMgmtService {
             }
 
             userRepository.update(userId, oldUser);
+
             transaction.commit();
         } catch (final RepositoryException e) {
             if (transaction.isActive()) {
@@ -252,28 +205,28 @@ public class UserMgmtService {
     /**
      * Adds a user with the specified request json object.
      *
-     * @param requestJSONObject the specified request json object, for example,      <pre>
-     * {
-     *     "userName": "",
-     *     "userEmail": "",
-     *     "userPassword": "", // Unhashed
-     *     "userURL": "", // optional, uses 'servePath' instead if not specified
-     *     "userRole": "", // optional, uses {@value Role#DEFAULT_ROLE} instead if not specified
-     *     "userAvatar": "" // optional, users generated gravatar url instead if not specified
-     * }
-     * </pre>,see {@link User} for more details
-     *
+     * @param requestJSONObject the specified request json object, for example,
+     *                          "userName": "",
+     *                          "userEmail": "",
+     *                          "userPassword": "", // Unhashed
+     *                          "userURL": "", // optional, uses 'servePath' instead if not specified
+     *                          "userRole": "", // optional, uses {@value Role#DEFAULT_ROLE} instead if not specified
+     *                          "userAvatar": "" // optional, users generated gravatar url instead if not specified
+     *                          ,see {@link User} for more details
      * @return generated user id
      * @throws ServiceException service exception
      */
-    public String addUser(final JSONObject requestJSONObject) throws ServiceException {
+    public synchronized String addUser(final JSONObject requestJSONObject) throws ServiceException {
         final Transaction transaction = userRepository.beginTransaction();
 
         try {
             final JSONObject user = new JSONObject();
             final String userEmail = requestJSONObject.optString(User.USER_EMAIL).trim().toLowerCase();
-            final JSONObject duplicatedUser = userRepository.getByEmail(userEmail);
+            if (!Strings.isEmail(userEmail)) {
+                throw new ServiceException(langPropsService.get("mailInvalidLabel"));
+            }
 
+            JSONObject duplicatedUser = userRepository.getByEmail(userEmail);
             if (null != duplicatedUser) {
                 if (transaction.isActive()) {
                     transaction.rollback();
@@ -285,13 +238,24 @@ public class UserMgmtService {
             user.put(User.USER_EMAIL, userEmail);
 
             final String userName = requestJSONObject.optString(User.USER_NAME);
+            if (UserExt.invalidUserName(userName)) {
+                throw new ServiceException(langPropsService.get("userNameInvalidLabel"));
+            }
+            duplicatedUser = userRepository.getByUserName(userName);
+            if (null != duplicatedUser) {
+                if (transaction.isActive()) {
+                    transaction.rollback();
+                }
+
+                throw new ServiceException(langPropsService.get("duplicatedUserNameLabel"));
+            }
             user.put(User.USER_NAME, userName);
 
             final String userPassword = requestJSONObject.optString(User.USER_PASSWORD);
-            user.put(User.USER_PASSWORD, MD5.hash(userPassword));
+            user.put(User.USER_PASSWORD, DigestUtils.md5Hex(userPassword));
 
             String userURL = requestJSONObject.optString(User.USER_URL);
-            if (Strings.isEmptyOrNull(userURL)) {
+            if (StringUtils.isBlank(userURL)) {
                 userURL = Latkes.getServePath();
             }
 
@@ -308,13 +272,12 @@ public class UserMgmtService {
             user.put(UserExt.USER_PUBLISHED_ARTICLE_COUNT, 0);
 
             String userAvatar = requestJSONObject.optString(UserExt.USER_AVATAR);
-            if (Strings.isEmptyOrNull(userAvatar)) {
-                userAvatar = Thumbnails.getGravatarURL(userEmail, "128");
+            if (StringUtils.isBlank(userAvatar)) {
+                userAvatar = Solos.getGravatarURL(userEmail, "128");
             }
             user.put(UserExt.USER_AVATAR, userAvatar);
 
             userRepository.add(user);
-
             transaction.commit();
 
             return user.optString(Keys.OBJECT_ID);
@@ -346,8 +309,25 @@ public class UserMgmtService {
                 transaction.rollback();
             }
 
-            LOGGER.log(Level.ERROR, "Removes a user[id=" + userId + "] failed", e);
+            LOGGER.log(Level.ERROR, "Removes a user [id=" + userId + "] failed", e);
             throw new ServiceException(e);
+        }
+
+        final JSONObject oauthGitHubOpt = optionQueryService.getOptionById(Option.ID_C_OAUTH_GITHUB);
+        if (null != oauthGitHubOpt) {
+            String value = oauthGitHubOpt.optString(Option.OPTION_VALUE);
+            try {
+                final Set<String> githubs = CollectionUtils.jsonArrayToSet(new JSONArray(value));
+                final String oAuthPair = Option.getOAuthPair(githubs, userId);
+                if (StringUtils.isNotBlank(oAuthPair)) {
+                    githubs.remove(oAuthPair);
+                    value = new JSONArray(githubs).toString();
+                    oauthGitHubOpt.put(Option.OPTION_VALUE, value);
+                    optionMgmtService.addOrUpdateOption(oauthGitHubOpt);
+                }
+            } catch (final Exception e) {
+                LOGGER.log(Level.ERROR, "Remove oauth GitHub data for user [id=" + userId + "] failed", e);
+            }
         }
     }
 

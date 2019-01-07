@@ -1,24 +1,24 @@
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Solo - A small and beautiful blogging system written in Java.
+ * Copyright (c) 2010-2019, b3log.org & hacpai.com
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package org.b3log.solo.service;
 
-
-import java.util.List;
-import javax.inject.Inject;
 import org.b3log.latke.Keys;
+import org.b3log.latke.ioc.Inject;
 import org.b3log.latke.logging.Level;
 import org.b3log.latke.logging.Logger;
 import org.b3log.latke.repository.RepositoryException;
@@ -26,16 +26,18 @@ import org.b3log.latke.repository.Transaction;
 import org.b3log.latke.service.ServiceException;
 import org.b3log.latke.service.annotation.Service;
 import org.b3log.solo.model.Tag;
+import org.b3log.solo.repository.CategoryTagRepository;
 import org.b3log.solo.repository.TagRepository;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.List;
 
 /**
  * Tag management service.
  *
  * @author <a href="http://88250.b3log.org">Liang Ding</a>
- * @version 1.0.0.1, Oct 26, 2011
+ * @version 1.0.0.2, Mar 31, 2017
  * @since 0.4.0
  */
 @Service
@@ -44,7 +46,7 @@ public class TagMgmtService {
     /**
      * Logger.
      */
-    private static final Logger LOGGER = Logger.getLogger(TagMgmtService.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(TagMgmtService.class);
 
     /**
      * Tag query service.
@@ -59,11 +61,17 @@ public class TagMgmtService {
     private TagRepository tagRepository;
 
     /**
+     * Category-tag repository.
+     */
+    @Inject
+    private CategoryTagRepository categoryTagRepository;
+
+    /**
      * Decrements reference count of every tag of an published article specified
      * by the given article id.
      *
      * @param articleId the given article id
-     * @throws JSONException json exception
+     * @throws JSONException       json exception
      * @throws RepositoryException repository exception
      */
     public void decTagPublishedRefCount(final String articleId) throws JSONException, RepositoryException {
@@ -99,6 +107,7 @@ public class TagMgmtService {
                 if (0 == tagRefCnt) {
                     final String tagId = tag.getString(Keys.OBJECT_ID);
 
+                    categoryTagRepository.removeByTagId(tagId);
                     tagRepository.remove(tagId);
                 }
             }
@@ -117,7 +126,7 @@ public class TagMgmtService {
 
     /**
      * Sets the tag repository with the specified tag repository.
-     * 
+     *
      * @param tagRepository the specified tag repository
      */
     public void setTagRepository(final TagRepository tagRepository) {
@@ -126,7 +135,7 @@ public class TagMgmtService {
 
     /**
      * Sets the tag query service with the specified tag query service.
-     * 
+     *
      * @param tagQueryService the specified tag query service
      */
     public void setTagQueryService(final TagQueryService tagQueryService) {

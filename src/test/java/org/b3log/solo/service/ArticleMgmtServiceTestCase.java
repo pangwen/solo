@@ -1,59 +1,51 @@
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Solo - A small and beautiful blogging system written in Java.
+ * Copyright (c) 2010-2019, b3log.org & hacpai.com
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package org.b3log.solo.service;
 
-import java.util.List;
 import org.b3log.latke.Keys;
-import org.b3log.latke.model.User;
-import org.b3log.latke.util.Requests;
 import org.b3log.solo.AbstractTestCase;
 import org.b3log.solo.model.Article;
 import org.b3log.solo.model.Common;
+import org.b3log.solo.util.Solos;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.util.List;
+
 /**
  * {@link ArticleMgmtService} test case.
  *
  * @author <a href="http://88250.b3log.org">Liang Ding</a>
- * @version 1.0.0.5, Sep 11, 2012
+ * @version 1.0.0.6, Sep 16, 2018
  */
 @Test(suiteName = "service")
 public class ArticleMgmtServiceTestCase extends AbstractTestCase {
 
     /**
      * Init.
-     * 
+     *
      * @throws Exception exception
      */
     @Test
     public void init() throws Exception {
-        final InitService initService = getInitService();
-
-        final JSONObject requestJSONObject = new JSONObject();
-        requestJSONObject.put(User.USER_EMAIL, "test@gmail.com");
-        requestJSONObject.put(User.USER_NAME, "Admin");
-        requestJSONObject.put(User.USER_PASSWORD, "pass");
-        
-        initService.init(requestJSONObject);
-
-        final UserQueryService userQueryService = getUserQueryService();
-        Assert.assertNotNull(userQueryService.getUserByEmail("test@gmail.com"));
+        super.init();
     }
 
     /**
@@ -69,7 +61,10 @@ public class ArticleMgmtServiceTestCase extends AbstractTestCase {
         final JSONObject article = new JSONObject();
         requestJSONObject.put(Article.ARTICLE, article);
 
-        article.put(Article.ARTICLE_AUTHOR_EMAIL, "test@gmail.com");
+        final JSONObject admin = getUserQueryService().getAdmin();
+        final String userId = admin.optString(Keys.OBJECT_ID);
+
+        article.put(Article.ARTICLE_AUTHOR_ID, userId);
         article.put(Article.ARTICLE_TITLE, "article1 title");
         article.put(Article.ARTICLE_ABSTRACT, "article1 abstract");
         article.put(Article.ARTICLE_CONTENT, "article1 content");
@@ -99,7 +94,10 @@ public class ArticleMgmtServiceTestCase extends AbstractTestCase {
         final JSONObject article = new JSONObject();
         requestJSONObject.put(Article.ARTICLE, article);
 
-        article.put(Article.ARTICLE_AUTHOR_EMAIL, "test@gmail.com");
+        final JSONObject admin = getUserQueryService().getAdmin();
+        final String userId = admin.optString(Keys.OBJECT_ID);
+
+        article.put(Article.ARTICLE_AUTHOR_ID, userId);
         article.put(Article.ARTICLE_TITLE, "article1 title");
         article.put(Article.ARTICLE_ABSTRACT, "article1 abstract");
         article.put(Article.ARTICLE_CONTENT, "article1 content");
@@ -117,7 +115,7 @@ public class ArticleMgmtServiceTestCase extends AbstractTestCase {
 
     /**
      * Update Article.
-     * 
+     *
      * @throws Exception exception
      */
     @Test(dependsOnMethods = "init")
@@ -128,7 +126,10 @@ public class ArticleMgmtServiceTestCase extends AbstractTestCase {
         final JSONObject article = new JSONObject();
         requestJSONObject.put(Article.ARTICLE, article);
 
-        article.put(Article.ARTICLE_AUTHOR_EMAIL, "test@gmail.com");
+        final JSONObject admin = getUserQueryService().getAdmin();
+        final String userId = admin.optString(Keys.OBJECT_ID);
+
+        article.put(Article.ARTICLE_AUTHOR_ID, userId);
         article.put(Article.ARTICLE_TITLE, "article2 title");
         article.put(Article.ARTICLE_ABSTRACT, "article2 abstract");
         article.put(Article.ARTICLE_CONTENT, "article2 content");
@@ -157,7 +158,7 @@ public class ArticleMgmtServiceTestCase extends AbstractTestCase {
 
     /**
      * Remove Article.
-     * 
+     *
      * @throws Exception exception
      */
     @Test(dependsOnMethods = "init")
@@ -168,7 +169,10 @@ public class ArticleMgmtServiceTestCase extends AbstractTestCase {
         final JSONObject article = new JSONObject();
         requestJSONObject.put(Article.ARTICLE, article);
 
-        article.put(Article.ARTICLE_AUTHOR_EMAIL, "test@gmail.com");
+        final JSONObject admin = getUserQueryService().getAdmin();
+        final String userId = admin.optString(Keys.OBJECT_ID);
+
+        article.put(Article.ARTICLE_AUTHOR_ID, userId);
         article.put(Article.ARTICLE_TITLE, "article3 title");
         article.put(Article.ARTICLE_ABSTRACT, "article3 abstract");
         article.put(Article.ARTICLE_CONTENT, "article3 content");
@@ -193,14 +197,14 @@ public class ArticleMgmtServiceTestCase extends AbstractTestCase {
 
     /**
      * Top Article.
-     * 
+     *
      * @throws Exception exception
      */
     @Test(dependsOnMethods = "addArticle")
     public void topArticle() throws Exception {
         final ArticleMgmtService articleMgmtService = getArticleMgmtService();
         final ArticleQueryService articleQueryService = getArticleQueryService();
-        final JSONObject paginationRequest = Requests.buildPaginationRequest("1/10/20");
+        final JSONObject paginationRequest = Solos.buildPaginationRequest("1/10/20");
         final JSONArray articles = articleQueryService.getArticles(paginationRequest).optJSONArray(Article.ARTICLES);
 
         Assert.assertNotEquals(articles.length(), 0);
@@ -213,7 +217,7 @@ public class ArticleMgmtServiceTestCase extends AbstractTestCase {
 
     /**
      * Cancel Publish Article.
-     * 
+     *
      * @throws Exception exception
      */
     @Test(dependsOnMethods = "init")
@@ -224,7 +228,10 @@ public class ArticleMgmtServiceTestCase extends AbstractTestCase {
         final JSONObject article = new JSONObject();
         requestJSONObject.put(Article.ARTICLE, article);
 
-        article.put(Article.ARTICLE_AUTHOR_EMAIL, "test@gmail.com");
+        final JSONObject admin = getUserQueryService().getAdmin();
+        final String userId = admin.optString(Keys.OBJECT_ID);
+
+        article.put(Article.ARTICLE_AUTHOR_ID, userId);
         article.put(Article.ARTICLE_TITLE, "article4 title");
         article.put(Article.ARTICLE_ABSTRACT, "article4 abstract");
         article.put(Article.ARTICLE_CONTENT, "article4 content");
@@ -241,7 +248,7 @@ public class ArticleMgmtServiceTestCase extends AbstractTestCase {
         Assert.assertNotNull(articleId);
 
         final ArticleQueryService articleQueryService = getArticleQueryService();
-        final JSONObject paginationRequest = Requests.buildPaginationRequest("1/10/20");
+        final JSONObject paginationRequest = Solos.buildPaginationRequest("1/10/20");
         JSONArray articles = articleQueryService.getArticles(paginationRequest).optJSONArray(Article.ARTICLES);
 
         int articleCount = articles.length();
@@ -254,7 +261,7 @@ public class ArticleMgmtServiceTestCase extends AbstractTestCase {
 
     /**
      * Update Articles Random Value.
-     * 
+     *
      * @throws Exception exception
      */
     @Test(dependsOnMethods = "addArticle")

@@ -1,17 +1,19 @@
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Solo - A small and beautiful blogging system written in Java.
+ * Copyright (c) 2010-2019, b3log.org & hacpai.com
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package org.b3log.solo.service;
 
@@ -34,7 +36,7 @@ public class OptionMgmtServiceTestCase extends AbstractTestCase {
 
     /**
      * Add.
-     * 
+     *
      * @throws Exception exception
      */
     @Test
@@ -47,13 +49,16 @@ public class OptionMgmtServiceTestCase extends AbstractTestCase {
         option.put(Option.OPTION_VALUE, 0L);
 
         final String id = optionMgmtService.addOrUpdateOption(option);
-        System.out.println(id);
+        //System.out.println(id);
         Assert.assertNotNull(id);
+
+        final JSONObject opt = getOptionQueryService().getOptionById(Option.ID_C_BROADCAST_CHANCE_EXPIRATION_TIME);
+        Assert.assertEquals(opt.getInt(Option.OPTION_VALUE), 0L);
     }
 
     /**
      * Update.
-     * 
+     *
      * @throws Exception exception
      */
     @Test
@@ -66,24 +71,23 @@ public class OptionMgmtServiceTestCase extends AbstractTestCase {
         option.put(Option.OPTION_VALUE, 0L);
 
         final String id = optionMgmtService.addOrUpdateOption(option); // Add
-        System.out.println(id);
+        //System.out.println(id);
         Assert.assertNotNull(id);
 
         option = new JSONObject();
         option.put(Keys.OBJECT_ID, Option.ID_C_BROADCAST_CHANCE_EXPIRATION_TIME);
         option.put(Option.OPTION_CATEGORY, Option.CATEGORY_C_BROADCAST);
         option.put(Option.OPTION_VALUE, 1L);
-        
+
         optionMgmtService.addOrUpdateOption(option); // Update
 
         final JSONObject opt = getOptionQueryService().getOptionById(Option.ID_C_BROADCAST_CHANCE_EXPIRATION_TIME);
         Assert.assertEquals(opt.getInt(Option.OPTION_VALUE), 1L);
-
     }
 
     /**
      * Remove.
-     * 
+     *
      * @throws Exception exception
      */
     @Test

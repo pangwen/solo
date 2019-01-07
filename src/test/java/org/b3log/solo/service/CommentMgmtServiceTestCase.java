@@ -1,64 +1,57 @@
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Solo - A small and beautiful blogging system written in Java.
+ * Copyright (c) 2010-2019, b3log.org & hacpai.com
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package org.b3log.solo.service;
 
-import java.util.List;
 import org.b3log.latke.Keys;
-import org.b3log.latke.model.User;
 import org.b3log.latke.util.Requests;
 import org.b3log.solo.AbstractTestCase;
 import org.b3log.solo.model.Comment;
 import org.b3log.solo.model.Page;
+import org.b3log.solo.util.Solos;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.util.List;
+
 /**
  * {@link CommentMgmtService} test case.
  *
  * @author <a href="http://88250.b3log.org">Liang Ding</a>
- * @version 1.0.0.2, Sep 11, 2012
+ * @version 1.0.0.3, Sep 16, 2018
  */
 @Test(suiteName = "service")
 public class CommentMgmtServiceTestCase extends AbstractTestCase {
 
     /**
      * Init.
-     * 
+     *
      * @throws Exception exception
      */
     @Test
     public void init() throws Exception {
-        final InitService initService = getInitService();
-
-        final JSONObject requestJSONObject = new JSONObject();
-        requestJSONObject.put(User.USER_EMAIL, "test@gmail.com");
-        requestJSONObject.put(User.USER_NAME, "Admin");
-        requestJSONObject.put(User.USER_PASSWORD, "pass");
-
-        initService.init(requestJSONObject);
-
-        final UserQueryService userQueryService = getUserQueryService();
-        Assert.assertNotNull(userQueryService.getUserByEmail("test@gmail.com"));
+        super.init();
     }
 
     /**
      * Add Article Comment.
-     * 
+     *
      * @throws Exception exception
      */
     @Test(dependsOnMethods = "init")
@@ -70,7 +63,7 @@ public class CommentMgmtServiceTestCase extends AbstractTestCase {
         Assert.assertEquals(articles.size(), 1);
 
         final CommentQueryService commentQueryService = getCommentQueryService();
-        JSONObject paginationRequest = Requests.buildPaginationRequest("1/10/20");
+        JSONObject paginationRequest = Solos.buildPaginationRequest("1/10/20");
         JSONObject result = commentQueryService.getComments(paginationRequest);
 
         Assert.assertNotNull(result);
@@ -89,7 +82,7 @@ public class CommentMgmtServiceTestCase extends AbstractTestCase {
         final JSONObject addResult = commentMgmtService.addArticleComment(requestJSONObject);
         Assert.assertNotNull(addResult);
         Assert.assertNotNull(addResult.getString(Keys.OBJECT_ID));
-        Assert.assertNotNull(addResult.getString(Comment.COMMENT_DATE));
+        Assert.assertNotNull(addResult.getString(Comment.COMMENT_T_DATE));
         Assert.assertNotNull(addResult.getString(Comment.COMMENT_THUMBNAIL_URL));
         Assert.assertNotNull(addResult.getString(Comment.COMMENT_SHARP_URL));
 
@@ -101,7 +94,7 @@ public class CommentMgmtServiceTestCase extends AbstractTestCase {
 
     /**
      * Add Page Comment.
-     * 
+     *
      * @throws Exception exception
      */
     @Test(dependsOnMethods = "addArticleComment")
@@ -110,7 +103,7 @@ public class CommentMgmtServiceTestCase extends AbstractTestCase {
 
         final PageQueryService pageQueryService = getPageQueryService();
 
-        final JSONObject paginationRequest = Requests.buildPaginationRequest("1/10/20");
+        final JSONObject paginationRequest = Solos.buildPaginationRequest("1/10/20");
         JSONObject result = pageQueryService.getPages(paginationRequest);
 
         Assert.assertNotNull(result);
@@ -123,7 +116,7 @@ public class CommentMgmtServiceTestCase extends AbstractTestCase {
 
         Assert.assertNotNull(result);
         Assert.assertEquals(result.getJSONArray(Comment.COMMENTS).length(),
-                            2);  // 2 article comments
+                2);  // 2 article comments
 
         final CommentMgmtService commentMgmtService = getCommentMgmtService();
         final JSONObject requestJSONObject = new JSONObject();
@@ -138,7 +131,7 @@ public class CommentMgmtServiceTestCase extends AbstractTestCase {
         final JSONObject addResult = commentMgmtService.addPageComment(requestJSONObject);
         Assert.assertNotNull(addResult);
         Assert.assertNotNull(addResult.getString(Keys.OBJECT_ID));
-        Assert.assertNotNull(addResult.getString(Comment.COMMENT_DATE));
+        Assert.assertNotNull(addResult.getString(Comment.COMMENT_T_DATE));
         Assert.assertNotNull(addResult.getString(Comment.COMMENT_THUMBNAIL_URL));
         Assert.assertNotNull(addResult.getString(Comment.COMMENT_SHARP_URL));
 
@@ -146,7 +139,7 @@ public class CommentMgmtServiceTestCase extends AbstractTestCase {
 
         Assert.assertNotNull(result);
         Assert.assertEquals(result.getJSONArray(Comment.COMMENTS).length(),
-                            3);  // 2 article comments + 1 page comment
+                3);  // 2 article comments + 1 page comment
 
         final List<JSONObject> pageComments = commentQueryService.getComments(pageId);
         Assert.assertNotNull(pageComments);
@@ -155,7 +148,7 @@ public class CommentMgmtServiceTestCase extends AbstractTestCase {
 
     /**
      * Adds a page.
-     * 
+     *
      * @throws Exception exception
      */
     private void addPage() throws Exception {

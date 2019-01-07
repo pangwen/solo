@@ -1,3 +1,22 @@
+<#--
+
+    Solo - A small and beautiful blogging system written in Java.
+    Copyright (c) 2010-2019, b3log.org & hacpai.com
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
+
+    You should have received a copy of the GNU Affero General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+-->
 <!DOCTYPE html>
 <html>
     <head>
@@ -11,7 +30,7 @@
             <div class="wrap">
                 <div class="content">
                     <div class="logo">
-                        <a href="http://b3log.org" target="_blank">
+                        <a href="https://b3log.org" target="_blank">
                             <img border="0" width="153" height="56" alt="B3log" title="B3log" src="${staticServePath}/images/logo.jpg"/>
                         </a>
                     </div>
@@ -23,7 +42,7 @@
                             <a href="https://github.com/b3log/solo/issues/new">report</a> it to help us.
                             Return to <a href="${servePath}">Index</a>.
                         </div>
-                        <a href="http://b3log.org" target="_blank">
+                        <a href="https://b3log.org" target="_blank">
                             <img border="0" class="icon" alt="B3log" title="B3log" src="${staticServePath}/favicon.png"/>
                         </a>
                     </div>
@@ -34,7 +53,7 @@
         <div class="footerWrapper">
             <div class="footer">
                 &copy; ${year}
-                Powered by <a href="http://b3log.org" target="_blank">B3log 开源</a>, ver ${version}
+                Powered by <a href="https://b3log.org" target="_blank">B3log 开源</a>, ver ${version}
             </div>
         </div>
     </body>

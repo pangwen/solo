@@ -1,24 +1,24 @@
 /*
- * Copyright (c) 2010-2017, b3log.org & hacpai.com
+ * Solo - A small and beautiful blogging system written in Java.
+ * Copyright (c) 2010-2019, b3log.org & hacpai.com
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package org.b3log.solo.service;
 
 import org.b3log.latke.Keys;
-import org.b3log.latke.util.Requests;
 import org.b3log.solo.AbstractTestCase;
-import org.b3log.solo.model.Link;
 import org.b3log.solo.model.Option;
 import org.json.JSONObject;
 import org.testng.Assert;
@@ -28,7 +28,7 @@ import org.testng.annotations.Test;
  * {@link OptionQueryService} test case.
  *
  * @author <a href="http://88250.b3log.org">Liang Ding</a>
- * @version 1.0.0.0, Apr 19, 2013
+ * @version 1.0.0.1, Jul 16, 2017
  * @since 0.6.0
  */
 @Test(suiteName = "service")
@@ -36,7 +36,7 @@ public class OptionQueryServiceTestCase extends AbstractTestCase {
 
     /**
      * Gets.
-     * 
+     *
      * @throws Exception exception
      */
     @Test
@@ -50,16 +50,21 @@ public class OptionQueryServiceTestCase extends AbstractTestCase {
         // Add one
         final OptionMgmtService optionMgmtService = getOptionMgmtService();
 
-        final JSONObject option = new JSONObject();
+        JSONObject option = new JSONObject();
         option.put(Keys.OBJECT_ID, Option.ID_C_BROADCAST_CHANCE_EXPIRATION_TIME);
         option.put(Option.OPTION_CATEGORY, Option.CATEGORY_C_BROADCAST);
-        option.put(Option.OPTION_VALUE, 0L);
+        option.put(Option.OPTION_VALUE, 5L);
 
         final String id = optionMgmtService.addOrUpdateOption(option);
         Assert.assertNotNull(id);
 
         // Check again
+
+        option = optionQueryService.getOptionById(Option.ID_C_BROADCAST_CHANCE_EXPIRATION_TIME);
+        Assert.assertNotNull(option);
+
         options = optionQueryService.getOptions(Option.CATEGORY_C_BROADCAST);
         Assert.assertNotNull(options);
+        Assert.assertEquals(options.optLong(Option.ID_C_BROADCAST_CHANCE_EXPIRATION_TIME), 5L);
     }
 }
